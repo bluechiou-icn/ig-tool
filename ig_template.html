@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IG 輪播貼文 空白模板</title>
+    <!-- 引入 html2canvas 實現圖片下載 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #87CEFA; /* 淺藍色 */
+            --text-light: #FFFFFF;
+            --bg-fallback: #1a1a2e;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #0f0f1a;
+            color: var(--text-light);
+            font-family: 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-controls {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        #slideCounter {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* 1080x1080 IG Square Container */
+        .ig-container {
+            width: 1080px;
+            height: 1080px;
+            position: relative;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform-origin: top center;
+            transform: scale(min(1, calc((100vw - 40px) / 1080)));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Glassmorphism panel */
+        .content-panel {
+            width: 85%;
+            height: 85%;
+            background: rgba(15, 15, 20, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 30px;
+            padding: 60px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            display: none;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .content-panel.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Typography */
+        h1 {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 51px;
+            line-height: 1.3;
+            text-align: center;
+            margin-bottom: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 45px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 12px;
+            display: inline-block;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 33px;
+            margin-bottom: 24px;
+        }
+
+        p, li {
+            color: var(--text-light);
+            font-weight: normal;
+            font-size: 30px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        ul {
+            padding-left: 32px;
+        }
+
+        li::marker {
+            color: var(--primary-color);
+        }
+
+        .highlight {
+            color: var(--text-light);
+            font-weight: normal;
+        }
+
+        .slide-cover h1 {
+            font-size: 64px;
+            margin-bottom: 32px;
+        }
+        .slide-cover .date {
+            font-weight: normal;
+            font-size: 36px;
+            color: var(--text-light);
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 12px 24px;
+            border-radius: 12px;
+            display: inline-block;
+            align-self: center;
+        }
+
+        .slide-title-card {
+            text-align: center;
+            align-items: center;
+        }
+        .slide-title-card h2 {
+            font-size: 57px;
+            border: none;
+            margin-bottom: 32px;
+        }
+        .slide-title-card p {
+            font-weight: normal;
+            font-size: 33px;
+            color: var(--text-light);
+        }
+
+        .dots {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+        }
+        .dot.active {
+            background: var(--primary-color);
+        }
+
+        /* Toolbar Styles */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: rgba(15, 15, 20, 0.9);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--primary-color);
+            margin-bottom: 20px;
+            align-items: center;
+            transition: opacity 0.3s;
+            width: 1080px; 
+            box-sizing: border-box;
+        }
+        .toolbar-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            align-items: center;
+        }
+        .tool-btn {
+            background: transparent;
+            color: var(--text-light);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 12px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .tool-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        select.tool-btn {
+            background: rgba(0,0,0,0.5);
+            appearance: auto;
+        }
+        select.tool-btn option {
+            background: #1a1a2e;
+        }
+        .mode-switch {
+            background: #ff6b6b; 
+            color: white;
+            font-weight: bold;
+            border: none;
+        }
+        .mode-switch.edit-mode {
+            background: #4ecdc4; 
+        }
+        
+        .draggable-mode .ig-container * {
+            user-select: none;
+        }
+        .draggable-mode .ig-container h1, 
+        .draggable-mode .ig-container h2, 
+        .draggable-mode .ig-container h3, 
+        .draggable-mode .ig-container p, 
+        .draggable-mode .ig-container ul, 
+        .draggable-mode .ig-container .date,
+        .draggable-mode .ig-container .element-badge {
+            cursor: move;
+            outline: 1px dashed rgba(255,255,255,0.3);
+            position: relative; 
+            z-index: 10;
+        }
+        .draggable-mode .ig-container h1:hover, 
+        .draggable-mode .ig-container h2:hover, 
+        .draggable-mode .ig-container h3:hover, 
+        .draggable-mode .ig-container p:hover, 
+        .draggable-mode .ig-container ul:hover, 
+        .draggable-mode .ig-container .date:hover,
+        .draggable-mode .ig-container .element-badge:hover {
+            outline: 2px solid #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        [contenteditable="true"] {
+            transition: outline 0.2s, background 0.2s;
+        }
+        [contenteditable="true"]:hover {
+            outline: 1px dashed rgba(135, 206, 250, 0.5);
+            cursor: text;
+        }
+        [contenteditable="true"]:focus {
+            outline: 1px solid var(--primary-color);
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+
+        .watermark {
+            position: absolute;
+            max-width: 200px;
+            z-index: 100;
+            pointer-events: auto;
+        }
+        .draggable-mode .ig-container .watermark {
+            cursor: move;
+            outline: 1px dashed rgba(255,255,255,0.5);
+        }
+        .draggable-mode .ig-container .watermark:hover {
+            outline: 2px solid #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        .tool-input {
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 2px 5px;
+            width: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-controls">
+        <button onclick="prevSlide()">❮ 上一張</button>
+        <div id="slideCounter">1 / 20</div>
+        <button onclick="nextSlide()">下一張 ❯</button>
+        <span style="color: var(--primary-color); font-size: 14px; margin-left: 10px;">💡 點擊畫面中的文字即可直接修改內容</span>
+    </div>
+
+    <!-- Toolbar UI -->
+    <div class="toolbar" id="textToolbar">
+        <!-- 第 1 排：全域設定 -->
+        <div class="toolbar-row">
+            <button class="tool-btn mode-switch edit-mode" id="modeToggle" onclick="toggleMode()">目前：編輯文字模式</button>
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.3); margin: 0 5px;"></div>
+            
+            <span style="font-size: 14px; color: var(--primary-color);">🌍 全域套用：</span>
+            <label class="tool-btn" style="cursor: pointer;" title="上傳/更換底圖 (套用全部)">
+                🖼️ 更換底圖
+                <input type="file" id="bgUploader" accept="image/*" style="display: none;" onchange="changeBackground(event)">
+            </label>
+            
+            <select class="tool-btn" onchange="changeFontFamily(this.value)" title="全域字體更改">
+                <option value="'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif">蘋方/微軟正黑 (預設)</option>
+                <option value="'Noto Sans TC', sans-serif">思源黑體 (無襯線)</option>
+                <option value="'Noto Serif TC', serif">思源宋體 (襯線)</option>
+                <option value="'Arial', sans-serif">Arial</option>
+            </select>
+
+            <label class="tool-btn" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="調整所有玻璃面板的透明度">
+                🔲 透明度
+                <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="0.75" oninput="changePanelOpacity(this.value)" style="width: 60px; cursor: pointer;">
+            </label>
+
+            <label class="tool-btn" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="調整面板寬度">
+                ↔️ 寬度
+                <input type="range" min="50" max="100" step="1" value="85" oninput="changePanelWidth(this.value)" style="width: 60px;">
+            </label>
+
+            <label class="tool-btn" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="調整面板高度">
+                ↕️ 高度
+                <input type="range" min="50" max="100" step="1" value="85" oninput="changePanelHeight(this.value)" style="width: 60px;">
+            </label>
+            
+            <label class="tool-btn" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="調整面板圓角">
+                🔄 圓角
+                <input type="range" min="0" max="150" step="5" value="30" oninput="changePanelRadius(this.value)" style="width: 60px;">
+            </label>
+
+            <div style="flex-grow: 1;"></div>
+            <button class="tool-btn" onclick="exportCurrentSlide()" style="background: var(--primary-color); color: #000; font-weight: bold;">📸 下載本頁</button>
+        </div>
+
+        <!-- 第 2 排：物件管理 -->
+        <div class="toolbar-row" style="margin-top: 5px;">
+            <span style="font-size: 14px; color: var(--primary-color);">📦 頁面與物件：</span>
+            <button class="tool-btn" onclick="addSlide()" title="在最後新增一頁空白幻燈片">➕ 新增一頁</button>
+            <button class="tool-btn" onclick="deleteCurrentSlide()" style="color: #ff6b6b;" title="刪除目前的幻燈片">➖ 刪除本頁</button>
+            <button class="tool-btn" onclick="document.getElementById('importModal').style.display='flex'" title="貼上大量文字並自動分頁" style="background: rgba(78, 205, 196, 0.3);">📝 批次匯入</button>
+            
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.3); margin: 0 5px;"></div>
+            
+            <button class="tool-btn" onclick="addTextBlock()" title="在目前頁面新增文字區塊">➕ 新增文字區塊</button>
+            <label class="tool-btn" style="cursor: pointer;" title="上傳圖片作為浮水印">
+                💧 加浮水印
+                <input type="file" accept="image/*" style="display: none;" onchange="addWatermark(event)">
+            </label>
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.3); margin: 0 5px;"></div>
+            
+            <button class="tool-btn" onclick="cloneActiveElement()" title="複製目前選取的物件">📄 複製區塊</button>
+            <button class="tool-btn" onclick="changeZIndex(1)" title="將物件移至上層">🔼 上移一層</button>
+            <button class="tool-btn" onclick="changeZIndex(-1)" title="將物件移至下層">🔽 下移一層</button>
+            
+            <div style="flex-grow: 1;"></div>
+            <button class="tool-btn" onclick="deleteActiveElement()" style="color: #ff6b6b;" title="刪除選取的文字或浮水印">🗑️ 刪除</button>
+        </div>
+
+        <!-- 第 3 排：文字樣式 -->
+        <div class="toolbar-row" style="margin-top: 5px;">
+            <span style="font-size: 14px; color: var(--primary-color);">✍️ 文字樣式：</span>
+            <button class="tool-btn text-format-tool" onclick="formatText('bold')" title="粗體"><b>B</b></button>
+            <button class="tool-btn text-format-tool" onclick="formatText('italic')" title="斜體"><i>I</i></button>
+            
+            <label class="tool-btn" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                字體 <input type="color" onchange="applyBlockStyle('color', this.value)" title="更改區塊文字顏色" style="height: 24px; width: 24px; padding: 0; border: none; background: transparent; cursor: pointer;" value="#ffffff">
+            </label>
+            <label class="tool-btn" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                背景 <input type="color" onchange="applyBlockStyle('backgroundColor', this.value)" title="更改區塊背景顏色" style="height: 24px; width: 24px; padding: 0; border: none; background: transparent; cursor: pointer;" value="#000000">
+            </label>
+            
+            <button class="tool-btn text-format-tool" onclick="applyBlockStyle('backgroundColor', 'transparent')" title="清除區塊背景色">🚫 清除背景</button>
+
+            <button class="tool-btn text-format-tool" onclick="changeFontSize(4)" title="放大文字">A+</button>
+            <button class="tool-btn text-format-tool" onclick="changeFontSize(-4)" title="縮小文字">A-</button>
+            
+            <button class="tool-btn text-format-tool" onclick="toggleTextShadow()" title="切換文字陰影">🌗 陰影開關</button>
+        </div>
+        
+        <!-- 第 4 排：排版間距 -->
+        <div class="toolbar-row" style="margin-top: 5px;">
+            <span style="font-size: 14px; color: var(--primary-color);">📏 排版與間距：</span>
+            <button class="tool-btn" onclick="alignLayout('left')" title="區塊靠左對齊">⫷</button>
+            <button class="tool-btn" onclick="alignLayout('center')" title="區塊水平置中">≣</button>
+            <button class="tool-btn" onclick="alignLayout('right')" title="區塊靠右對齊">⫸</button>
+            <button class="tool-btn" onclick="alignLayout('middle')" title="區塊垂直中央對齊">⇕</button>
+
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.3); margin: 0 5px;"></div>
+            
+            <label class="tool-btn text-format-tool" style="display: flex; align-items: center; gap: 5px;" title="調整行距 (預設約1.6)">
+                行距 <input type="number" class="tool-input" step="0.1" value="1.6" onchange="applyBlockStyle('lineHeight', this.value)">
+            </label>
+            <label class="tool-btn text-format-tool" style="display: flex; align-items: center; gap: 5px;" title="調整字距 (預設0)">
+                字距 <input type="number" class="tool-input" step="1" value="0" onchange="applyBlockStyle('letterSpacing', this.value + 'px')">
+            </label>
+
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.3); margin: 0 5px;"></div>
+            <button class="tool-btn" onclick="resetCurrentLayout()" title="重置選取區塊的位置">↺ 重置位置</button>
+        </div>
+    </div>
+
+    <!-- Blank Template Slides Generation -->
+    <div style="height: calc(1080px * min(1, calc((100vw - 40px) / 1080))); overflow: visible; display: flex; justify-content: center; width: 100%;">
+        <div class="ig-container" id="captureArea">
+            
+            <!-- Slide 1: Cover -->
+            <div class="content-panel slide-cover active" id="slide1">
+                <h1>點擊此處輸入封面標題</h1>
+                <div class="date">點擊此處輸入副標題或日期</div>
+            </div>
+
+            <!-- Generate remaining 19 slides as empty templates -->
+            <script>
+                const container = document.getElementById('captureArea');
+                for(let i=2; i<=20; i++) {
+                    const slide = document.createElement('div');
+                    slide.className = 'content-panel';
+                    slide.id = 'slide' + i;
+                    slide.innerHTML = `
+                        <h2>單頁標題 (第 ${i} 頁)</h2>
+                        <ul>
+                            <li><span class="highlight">重點一：</span> 點擊此處輸入內文...</li>
+                            <li><span class="highlight">重點二：</span> 點擊此處輸入內文...</li>
+                            <li><span class="highlight">重點三：</span> 點擊此處輸入內文...</li>
+                        </ul>
+                    `;
+                    container.appendChild(slide);
+                }
+            </script>
+
+            <!-- Navigation Dots overlay -->
+        <div class="dots" id="dotContainer"></div>
+    </div>
+    </div>
+
+    <!-- 批次匯入 Modal -->
+    <div id="importModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#1a1a2e; padding:30px; border-radius:10px; width:80%; max-width:600px; border:1px solid var(--primary-color);">
+            <h3 style="color:var(--primary-color); margin-top:0;">📝 批次匯入文字</h3>
+            <p style="font-size:14px; line-height:1.5;">請貼上整篇文字。<br>👉 <b>空一行（按兩次 Enter）</b>代表換下一張圖。<br>👉 每一張圖的第一行會自動設定為標題格式，其餘為內文。</p>
+            <textarea id="importText" style="width:100%; height:300px; background:rgba(0,0,0,0.5); color:white; border:1px solid #4ecdc4; padding:10px; box-sizing:border-box; font-size:16px; margin-bottom:15px;"></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="document.getElementById('importModal').style.display='none'" style="background:transparent; border:1px solid white; color:white;">取消</button>
+                <button onclick="processBatchImport()">自動分配並產生</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 20;
+
+        let isMoveMode = false;
+        let currentFocusedElement = null;
+        let activeElement = null; 
+        let isDragging = false;
+        let dragTarget = null;
+        let startX, startY;
+        let currentX = 0, currentY = 0;
+
+        function toggleMode() {
+            isMoveMode = !isMoveMode;
+            const toggleBtn = document.getElementById('modeToggle');
+            const elements = document.querySelectorAll('.ig-container h1, .ig-container h2, .ig-container h3, .ig-container p, .ig-container li, .ig-container ul, .ig-container .date, .ig-container .element-badge, .ig-container .watermark');
+            const textTools = document.querySelectorAll('.text-format-tool');
+
+            if (isMoveMode) {
+                toggleBtn.textContent = '目前：移動排版模式 (拖曳)';
+                toggleBtn.classList.remove('edit-mode');
+                document.body.classList.add('draggable-mode');
+                elements.forEach(el => el.removeAttribute('contenteditable'));
+                textTools.forEach(child => {
+                    child.style.opacity = '0.3';
+                    child.style.pointerEvents = 'none';
+                });
+            } else {
+                toggleBtn.textContent = '目前：編輯文字模式';
+                toggleBtn.classList.add('edit-mode');
+                document.body.classList.remove('draggable-mode');
+                elements.forEach(el => {
+                    if(el.tagName !== 'UL') { 
+                        el.setAttribute('contenteditable', 'true');
+                    }
+                });
+                textTools.forEach(child => {
+                    child.style.opacity = '1';
+                    child.style.pointerEvents = 'auto';
+                });
+            }
+        }
+
+        function bindEditableEvents() {
+            document.querySelectorAll('.ig-container h1, .ig-container h2, .ig-container p, .ig-container li, .ig-container .date').forEach(el => {
+                if (el.dataset.bound) return; // 防重複綁定
+                if (!isMoveMode) el.setAttribute('contenteditable', 'true');
+                el.addEventListener('keydown', (e) => e.stopPropagation());
+                el.addEventListener('focus', () => {
+                    currentFocusedElement = el;
+                    activeElement = el;
+                });
+                el.dataset.bound = "true";
+            });
+        }
+
+        // Initialize editor states (Wait for DOM generation)
+        setTimeout(() => {
+            bindEditableEvents();
+        }, 100);
+
+        document.addEventListener('mousedown', (e) => {
+            const target = e.target.closest('h1, h2, h3, p, ul, li, .date, .element-badge, .watermark');
+            if (target && target.closest('.ig-container')) {
+                activeElement = target; 
+            }
+            if (!isMoveMode) return;
+            if (target && target.closest('.ig-container')) {
+                isDragging = true;
+                dragTarget = target;
+                startX = e.clientX;
+                startY = e.clientY;
+                currentX = parseFloat(dragTarget.getAttribute('data-x')) || 0;
+                currentY = parseFloat(dragTarget.getAttribute('data-y')) || 0;
+                dragTarget.style.transition = 'none'; 
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging || !dragTarget) return;
+            const container = document.querySelector('.ig-container');
+            const scale = container.getBoundingClientRect().width / 1080;
+            const dx = (e.clientX - startX) / scale;
+            const dy = (e.clientY - startY) / scale;
+            const newX = currentX + dx;
+            const newY = currentY + dy;
+            dragTarget.style.transform = `translate(${newX}px, ${newY}px)`;
+            dragTarget.setAttribute('data-x', newX);
+            dragTarget.setAttribute('data-y', newY);
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            if (dragTarget) dragTarget.style.transition = ''; 
+            dragTarget = null;
+        });
+
+        function formatText(command) { document.execCommand(command, false, null); }
+
+        function applyBlockStyle(prop, value) {
+            const targetEl = currentFocusedElement || activeElement;
+            if (!targetEl) return alert("💡 請先點擊畫面中想修改的文字區塊。");
+            targetEl.style[prop] = value;
+            if (prop === 'backgroundColor' && value !== 'transparent') {
+                targetEl.style.padding = '10px 20px';
+                targetEl.style.borderRadius = '8px';
+            } else if (prop === 'backgroundColor' && value === 'transparent') {
+                targetEl.style.padding = '0';
+            }
+        }
+
+        function toggleTextShadow() {
+            const targetEl = currentFocusedElement || activeElement;
+            if (!targetEl) return alert("💡 請先點選文字區塊。");
+            const currentShadow = window.getComputedStyle(targetEl).textShadow;
+            targetEl.style.textShadow = (currentShadow === 'none') ? '2px 2px 4px rgba(0,0,0,0.8)' : 'none';
+        }
+
+        function changeFontSize(delta) {
+            const targetEl = currentFocusedElement || activeElement;
+            if (!targetEl) return alert("💡 請先點擊畫面中想修改大小的文字。");
+            let currentSize = parseFloat(window.getComputedStyle(targetEl).fontSize);
+            targetEl.style.fontSize = (currentSize + delta) + 'px';
+        }
+
+        function alignLayout(type) {
+            if (!activeElement) return alert("💡 請先點擊畫面中想要對齊的區塊。");
+            if (type === 'left') {
+                activeElement.style.alignSelf = 'flex-start';
+                activeElement.style.textAlign = 'left';
+                activeElement.style.margin = ''; 
+            } else if (type === 'center') {
+                activeElement.style.alignSelf = 'center';
+                activeElement.style.textAlign = 'center';
+                activeElement.style.margin = '';
+            } else if (type === 'right') {
+                activeElement.style.alignSelf = 'flex-end';
+                activeElement.style.textAlign = 'right';
+                activeElement.style.margin = '';
+            } else if (type === 'middle') {
+                activeElement.style.marginTop = 'auto';
+                activeElement.style.marginBottom = 'auto';
+            }
+            activeElement.style.transform = 'translate(0px, 0px)';
+            activeElement.setAttribute('data-x', '0');
+            activeElement.setAttribute('data-y', '0');
+        }
+
+        function changePanelWidth(value) { document.querySelectorAll('.content-panel').forEach(p => p.style.width = `${value}%`); }
+        function changePanelHeight(value) { document.querySelectorAll('.content-panel').forEach(p => p.style.height = `${value}%`); }
+        function changePanelRadius(value) { document.querySelectorAll('.content-panel').forEach(p => p.style.borderRadius = `${value}px`); }
+        function changePanelOpacity(value) { document.querySelectorAll('.content-panel').forEach(p => p.style.background = `rgba(15, 15, 20, ${value})`); }
+        function changeFontFamily(fontValue) { document.querySelector('.ig-container').style.fontFamily = fontValue; }
+
+        function changeBackground(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.querySelector('.ig-container').style.backgroundImage = `url('${e.target.result}')`;
+                };
+                reader.readAsDataURL(file);
+            }
+            event.target.value = ''; 
+        }
+
+        function rebuildDots() {
+            const dotContainer = document.getElementById('dotContainer');
+            dotContainer.innerHTML = '';
+            for(let i=1; i<=totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = `dot ${i === currentSlide ? 'active' : ''}`;
+                dotContainer.appendChild(dot);
+            }
+        }
+
+        function addSlide() {
+            totalSlides++;
+            const container = document.getElementById('captureArea');
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'content-panel';
+            slideDiv.id = 'slide' + totalSlides;
+            slideDiv.innerHTML = `<h2>新頁面 (第 ${totalSlides} 頁)</h2><p>點擊修改內文...</p>`;
+            
+            container.insertBefore(slideDiv, document.getElementById('dotContainer'));
+            bindEditableEvents();
+            rebuildDots();
+            currentSlide = totalSlides;
+            updateView();
+        }
+
+        function deleteCurrentSlide() {
+            if(totalSlides <= 1) return alert("💡 至少需要保留一頁！");
+            if(confirm(`確定要刪除第 ${currentSlide} 頁嗎？這將會清除此頁所有內容。`)) {
+                document.getElementById('slide' + currentSlide).remove();
+                
+                // 重新排序 ID
+                const remaining = document.querySelectorAll('.content-panel');
+                totalSlides = remaining.length;
+                remaining.forEach((el, idx) => {
+                    el.id = 'slide' + (idx + 1);
+                });
+                
+                if(currentSlide > totalSlides) currentSlide = totalSlides;
+                rebuildDots();
+                updateView();
+            }
+        }
+
+        function processBatchImport() {
+            const text = document.getElementById('importText').value.trim();
+            if(!text) return;
+            
+            // 透過空行拆分內容
+            const slidesData = text.split(/\n\s*\n/);
+            
+            // 清除現有頁面
+            document.querySelectorAll('.content-panel').forEach(el => el.remove());
+            
+            const container = document.getElementById('captureArea');
+            const dotContainer = document.getElementById('dotContainer');
+            
+            totalSlides = slidesData.length;
+            currentSlide = 1;
+            
+            slidesData.forEach((slideText, index) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `content-panel ${index === 0 ? 'active' : ''}`;
+                slideDiv.id = `slide${index + 1}`;
+                
+                const lines = slideText.split('\n').filter(l => l.trim() !== '');
+                let innerHTML = '';
+                lines.forEach((line, i) => {
+                    if(i === 0) innerHTML += `<h2>${line}</h2>`;
+                    else innerHTML += `<p>${line}</p>`;
+                });
+                
+                slideDiv.innerHTML = innerHTML;
+                container.insertBefore(slideDiv, dotContainer);
+            });
+            
+            bindEditableEvents();
+            rebuildDots();
+            updateView();
+            document.getElementById('importModal').style.display = 'none';
+        }
+
+        function addTextBlock() {
+            const activePanel = document.querySelector('.content-panel.active');
+            if (!activePanel) return;
+            const newP = document.createElement('p');
+            newP.textContent = '新文字區塊 (點擊修改)';
+            newP.style.fontSize = '30px';
+            newP.style.color = 'var(--text-light)';
+            if (!isMoveMode) newP.setAttribute('contenteditable', 'true');
+            
+            newP.addEventListener('keydown', (e) => e.stopPropagation());
+            newP.addEventListener('focus', () => { currentFocusedElement = newP; activeElement = newP; });
+            
+            activePanel.appendChild(newP);
+            activeElement = newP;
+            if(!isMoveMode) newP.focus();
+        }
+
+        function addWatermark(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.querySelector('.ig-container');
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'watermark';
+                    img.style.bottom = '30px';
+                    img.style.right = '30px';
+                    img.style.zIndex = '100'; 
+                    img.addEventListener('mousedown', () => activeElement = img);
+                    container.appendChild(img);
+                    activeElement = img;
+                };
+                reader.readAsDataURL(file);
+            }
+            event.target.value = ''; 
+        }
+
+        function cloneActiveElement() {
+            if (!activeElement) return alert("💡 請先點選要複製的區塊。");
+            const clone = activeElement.cloneNode(true);
+            const currentX = parseFloat(activeElement.getAttribute('data-x')) || 0;
+            const currentY = parseFloat(activeElement.getAttribute('data-y')) || 0;
+            const newX = currentX + 30;
+            const newY = currentY + 30;
+            clone.setAttribute('data-x', newX);
+            clone.setAttribute('data-y', newY);
+            clone.style.transform = `translate(${newX}px, ${newY}px)`;
+            
+            clone.addEventListener('mousedown', () => activeElement = clone);
+            if (clone.tagName !== 'IMG') {
+                clone.addEventListener('keydown', (e) => e.stopPropagation());
+                clone.addEventListener('focus', () => { currentFocusedElement = clone; activeElement = clone; });
+            }
+            activeElement.parentNode.appendChild(clone);
+            activeElement = clone;
+            if (!isMoveMode && clone.tagName !== 'IMG') clone.focus();
+        }
+
+        function changeZIndex(direction) {
+            if (!activeElement) return alert("💡 請先點選物件。");
+            let currentZ = parseInt(window.getComputedStyle(activeElement).zIndex) || 10;
+            if (currentZ === 'auto') currentZ = 10;
+            activeElement.style.zIndex = currentZ + direction;
+        }
+
+        function deleteActiveElement() {
+            if (!activeElement) return alert("💡 請先點選要刪除的物件。");
+            if (confirm("確定要刪除此物件嗎？")) {
+                activeElement.remove();
+                activeElement = null;
+                currentFocusedElement = null;
+            }
+        }
+
+        function resetCurrentLayout() {
+            if (!activeElement) return alert("💡 請先點選要重置位置的區塊。");
+            activeElement.style.transform = 'translate(0px, 0px)';
+            activeElement.setAttribute('data-x', '0');
+            activeElement.setAttribute('data-y', '0');
+            activeElement.style.margin = '';
+            activeElement.style.alignSelf = '';
+            activeElement.style.textAlign = '';
+        }
+
+        function exportCurrentSlide() {
+            const wasMoveMode = isMoveMode;
+            if (isMoveMode) toggleMode(); 
+            const container = document.getElementById('captureArea');
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ 產生中...';
+            
+            html2canvas(container, {
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: null 
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `IG_Slide_${currentSlide}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.innerHTML = originalText;
+                if (wasMoveMode) toggleMode();
+            }).catch(err => {
+                alert("圖片匯出失敗，可能因跨域權限受阻。");
+                console.error(err);
+                btn.innerHTML = originalText;
+            });
+        }
+
+        setTimeout(() => {
+            rebuildDots();
+        }, 100);
+
+        function updateView() {
+            for(let i=1; i<=totalSlides; i++) {
+                const el = document.getElementById('slide' + i);
+                if(el) el.classList.remove('active');
+            }
+            document.getElementById('slide' + currentSlide).classList.add('active');
+            document.getElementById('slideCounter').innerText = `${currentSlide} / ${totalSlides}`;
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                if(index + 1 === currentSlide) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
+
+        function nextSlide() {
+            if(currentSlide < totalSlides) {
+                currentSlide++;
+                updateView();
+            }
+        }
+
+        function prevSlide() {
+            if(currentSlide > 1) {
+                currentSlide--;
+                updateView();
+            }
+        }
+    </script>
+</body>
+</html>
