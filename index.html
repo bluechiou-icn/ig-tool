@@ -371,8 +371,14 @@
 
         <!-- 第 2 排：物件管理 -->
         <div class="toolbar-row" style="margin-top: 5px;">
-            <span style="font-size: 14px; color: var(--primary-color);">📦 物件管理：</span>
-            <button class="tool-btn" onclick="addTextBlock()" title="在目前頁面新增文字區塊">➕ 新增文字</button>
+            <span style="font-size: 14px; color: var(--primary-color);">📦 頁面與物件：</span>
+            <button class="tool-btn" onclick="addSlide()" title="在最後新增一頁空白幻燈片">➕ 新增一頁</button>
+            <button class="tool-btn" onclick="deleteCurrentSlide()" style="color: #ff6b6b;" title="刪除目前的幻燈片">➖ 刪除本頁</button>
+            <button class="tool-btn" onclick="document.getElementById('importModal').style.display='flex'" title="貼上大量文字並自動分頁" style="background: rgba(78, 205, 196, 0.3);">📝 批次匯入</button>
+            
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.3); margin: 0 5px;"></div>
+            
+            <button class="tool-btn" onclick="addTextBlock()" title="在目前頁面新增文字區塊">➕ 新增文字區塊</button>
             <label class="tool-btn" style="cursor: pointer;" title="上傳圖片作為浮水印">
                 💧 加浮水印
                 <input type="file" accept="image/*" style="display: none;" onchange="addWatermark(event)">
@@ -460,7 +466,20 @@
             </script>
 
             <!-- Navigation Dots overlay -->
-            <div class="dots" id="dotContainer"></div>
+        <div class="dots" id="dotContainer"></div>
+    </div>
+    </div>
+
+    <!-- 批次匯入 Modal -->
+    <div id="importModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#1a1a2e; padding:30px; border-radius:10px; width:80%; max-width:600px; border:1px solid var(--primary-color);">
+            <h3 style="color:var(--primary-color); margin-top:0;">📝 批次匯入文字</h3>
+            <p style="font-size:14px; line-height:1.5;">請貼上整篇文字。<br>👉 <b>空一行（按兩次 Enter）</b>代表換下一張圖。<br>👉 每一張圖的第一行會自動設定為標題格式，其餘為內文。</p>
+            <textarea id="importText" style="width:100%; height:300px; background:rgba(0,0,0,0.5); color:white; border:1px solid #4ecdc4; padding:10px; box-sizing:border-box; font-size:16px; margin-bottom:15px;"></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="document.getElementById('importModal').style.display='none'" style="background:transparent; border:1px solid white; color:white;">取消</button>
+                <button onclick="processBatchImport()">自動分配並產生</button>
+            </div>
         </div>
     </div>
 
@@ -507,16 +526,22 @@
             }
         }
 
-        // Initialize editor states (Wait for DOM generation)
-        setTimeout(() => {
+        function bindEditableEvents() {
             document.querySelectorAll('.ig-container h1, .ig-container h2, .ig-container p, .ig-container li, .ig-container .date').forEach(el => {
-                el.setAttribute('contenteditable', 'true');
+                if (el.dataset.bound) return; // 防重複綁定
+                if (!isMoveMode) el.setAttribute('contenteditable', 'true');
                 el.addEventListener('keydown', (e) => e.stopPropagation());
                 el.addEventListener('focus', () => {
                     currentFocusedElement = el;
                     activeElement = el;
                 });
+                el.dataset.bound = "true";
             });
+        }
+
+        // Initialize editor states (Wait for DOM generation)
+        setTimeout(() => {
+            bindEditableEvents();
         }, 100);
 
         document.addEventListener('mousedown', (e) => {
@@ -622,6 +647,87 @@
                 reader.readAsDataURL(file);
             }
             event.target.value = ''; 
+        }
+
+        function rebuildDots() {
+            const dotContainer = document.getElementById('dotContainer');
+            dotContainer.innerHTML = '';
+            for(let i=1; i<=totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = `dot ${i === currentSlide ? 'active' : ''}`;
+                dotContainer.appendChild(dot);
+            }
+        }
+
+        function addSlide() {
+            totalSlides++;
+            const container = document.getElementById('captureArea');
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'content-panel';
+            slideDiv.id = 'slide' + totalSlides;
+            slideDiv.innerHTML = `<h2>新頁面 (第 ${totalSlides} 頁)</h2><p>點擊修改內文...</p>`;
+            
+            container.insertBefore(slideDiv, document.getElementById('dotContainer'));
+            bindEditableEvents();
+            rebuildDots();
+            currentSlide = totalSlides;
+            updateView();
+        }
+
+        function deleteCurrentSlide() {
+            if(totalSlides <= 1) return alert("💡 至少需要保留一頁！");
+            if(confirm(`確定要刪除第 ${currentSlide} 頁嗎？這將會清除此頁所有內容。`)) {
+                document.getElementById('slide' + currentSlide).remove();
+                
+                // 重新排序 ID
+                const remaining = document.querySelectorAll('.content-panel');
+                totalSlides = remaining.length;
+                remaining.forEach((el, idx) => {
+                    el.id = 'slide' + (idx + 1);
+                });
+                
+                if(currentSlide > totalSlides) currentSlide = totalSlides;
+                rebuildDots();
+                updateView();
+            }
+        }
+
+        function processBatchImport() {
+            const text = document.getElementById('importText').value.trim();
+            if(!text) return;
+            
+            // 透過空行拆分內容
+            const slidesData = text.split(/\n\s*\n/);
+            
+            // 清除現有頁面
+            document.querySelectorAll('.content-panel').forEach(el => el.remove());
+            
+            const container = document.getElementById('captureArea');
+            const dotContainer = document.getElementById('dotContainer');
+            
+            totalSlides = slidesData.length;
+            currentSlide = 1;
+            
+            slidesData.forEach((slideText, index) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `content-panel ${index === 0 ? 'active' : ''}`;
+                slideDiv.id = `slide${index + 1}`;
+                
+                const lines = slideText.split('\n').filter(l => l.trim() !== '');
+                let innerHTML = '';
+                lines.forEach((line, i) => {
+                    if(i === 0) innerHTML += `<h2>${line}</h2>`;
+                    else innerHTML += `<p>${line}</p>`;
+                });
+                
+                slideDiv.innerHTML = innerHTML;
+                container.insertBefore(slideDiv, dotContainer);
+            });
+            
+            bindEditableEvents();
+            rebuildDots();
+            updateView();
+            document.getElementById('importModal').style.display = 'none';
         }
 
         function addTextBlock() {
@@ -736,12 +842,7 @@
         }
 
         setTimeout(() => {
-            const dotContainer = document.getElementById('dotContainer');
-            for(let i=1; i<=totalSlides; i++) {
-                const dot = document.createElement('div');
-                dot.className = `dot ${i === 1 ? 'active' : ''}`;
-                dotContainer.appendChild(dot);
-            }
+            rebuildDots();
         }, 100);
 
         function updateView() {
